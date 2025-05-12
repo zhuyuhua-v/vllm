@@ -87,7 +87,9 @@ class CustomOp(nn.Module):
         elif current_platform.is_tpu():
             return self.forward_tpu
         elif current_platform.is_xpu():
-            return self.forward_xpu
+            if current_platform.is_ipex_supported():
+                return self.forward_xpu
+            return self.forward_native
         elif current_platform.is_out_of_tree():
             return self.forward_oot
         else:

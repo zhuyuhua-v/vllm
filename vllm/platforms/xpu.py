@@ -26,6 +26,16 @@ class XPUPlatform(Platform):
     ray_device_key: str = "GPU"
     device_control_env_var: str = "ONEAPI_DEVICE_SELECTOR"
 
+    def is_ipex_supported(self) -> bool:
+        try:
+            # installed IPEX if the machine has XPUs.
+            import intel_extension_for_pytorch  # noqa: F401
+            import oneccl_bindings_for_pytorch  # noqa: F401
+            return True
+        except:
+            return False
+
+
     @classmethod
     def get_attn_backend_cls(cls, selected_backend: _Backend, head_size: int,
                              dtype: torch.dtype, kv_cache_dtype: Optional[str],
@@ -67,20 +77,20 @@ class XPUPlatform(Platform):
 
         # check and update model config
         model_config = vllm_config.model_config
-        if model_config.dtype == torch.bfloat16:
-            bf16_supported = cls.device_support_bf16()
-            if not bf16_supported:
-                logger.warning(
-                    "bfloat16 is only supported on Intel Data Center GPU, "
-                    "Intel Arc GPU is not supported yet. Your device is %s,"
-                    "which is not supported. will fallback to float16",
-                    cls.get_device_name())
-                model_config.dtype = torch.float16
-        if not model_config.enforce_eager:
-            logger.warning(
-                "CUDA graph is not supported on XPU, fallback to the eager "
-                "mode.")
-            model_config.enforce_eager = True
+        # if model_config.dtype == torch.bfloat16:
+        #     bf16_supported = cls.device_support_bf16()
+        #     if not bf16_supported:
+        #         logger.warning(
+        #             "bfloat16 is only supported on Intel Data Center GPU, "
+        #             "Intel Arc GPU is not supported yet. Your device is %s,"
+        #             "which is not supported. will fallback to float16",
+        #             cls.get_device_name())
+        #         model_config.dtype = torch.float16
+        # if not model_config.enforce_eager:
+        #     logger.warning(
+        #         "CUDA graph is not supported on XPU, fallback to the eager "
+        #         "mode.")
+        #     model_config.enforce_eager = True
 
         if vllm_config.speculative_config is not None:
             raise NotImplementedError(
@@ -91,8 +101,8 @@ class XPUPlatform(Platform):
 
         # check and update parallel config
         parallel_config = vllm_config.parallel_config
-        if parallel_config.worker_cls == "auto":
-            parallel_config.worker_cls = "vllm.worker.xpu_worker.XPUWorker"
+        # if parallel_config.worker_cls == "auto":
+        #     parallel_config.worker_cls = "vllm.worker.xpu_worker.XPUWorker"
 
         if parallel_config.distributed_executor_backend is None:
             parallel_config.distributed_executor_backend = "ray"

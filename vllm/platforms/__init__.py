@@ -111,6 +111,10 @@ def hpu_platform_plugin() -> Optional[str]:
 def xpu_platform_plugin() -> Optional[str]:
     is_xpu = False
 
+    import torch
+    if hasattr(torch, 'xpu') and torch.xpu.is_available():
+        is_xpu = True
+
     try:
         # installed IPEX if the machine has XPUs.
         import intel_extension_for_pytorch  # noqa: F401
