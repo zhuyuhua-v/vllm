@@ -2,8 +2,8 @@
 
 import os
 
-from triton.runtime.cache import (FileCacheManager, default_cache_dir,
-                                  default_dump_dir, default_override_dir)
+import triton
+from triton.runtime.cache import FileCacheManager
 
 from vllm.logger import init_logger
 
@@ -35,17 +35,17 @@ class CustomCacheManager(FileCacheManager):
         self.key = key
         self.lock_path = None
         if dump:
-            self.cache_dir = default_dump_dir()
+            self.cache_dir = triton.knobs.cache.dump_dir
             self.cache_dir = os.path.join(self.cache_dir, self.key)
             self.lock_path = os.path.join(self.cache_dir, "lock")
             os.makedirs(self.cache_dir, exist_ok=True)
         elif override:
-            self.cache_dir = default_override_dir()
+            self.cache_dir = triton.knobs.cache.override_dir
             self.cache_dir = os.path.join(self.cache_dir, self.key)
         else:
             # create cache directory if it doesn't exist
             self.cache_dir = os.getenv("TRITON_CACHE_DIR",
-                                       "").strip() or default_cache_dir()
+                                       "").strip() or triton.knobs.cache.dir
             if self.cache_dir:
                 self.cache_dir = f"{self.cache_dir}_{os.getpid()}"
                 self.cache_dir = os.path.join(self.cache_dir, self.key)
